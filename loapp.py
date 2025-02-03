@@ -2,16 +2,10 @@ import streamlit as st
 import pandas as pd
 from docx import Document
 
-# Fixed path for the LOA Word template
+import os
 
-TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "template")
-
-# Predefined template paths
-word_Template = {
-    "bank_draft": os.path.join(TEMPLATES_DIR, ".docx")
-}
-
-TEMPLATE_PATH = r"C:\Users\DELL\Desktop\Kartik\python drafts\LOA_template.docx"
+# Define relative path for the Word template
+TEMPLATE_PATH = os.path.join("template", "LOA_template.docx")
 
 # Function to round off values to the nearest hundred
 def round_off(value):
@@ -81,9 +75,9 @@ def modify_word_template(client_data, loan_details, client_name):
 
             # Add Total Row
             total_row = table.add_row().cells
-            total_row[0].text = "Total"
+            total_row[0].text = ""
             total_row[1].text = ""
-            total_row[2].text = ""
+            total_row[2].text = "Total"
             total_row[3].text = str(total_balance_os)
             total_row[4].text = str(total_25)
             total_row[5].text = str(total_30)
