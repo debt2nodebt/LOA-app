@@ -3,6 +3,14 @@ import pandas as pd
 from docx import Document
 
 # Fixed path for the LOA Word template
+
+TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "template")
+
+# Predefined template paths
+word_Template = {
+    "bank_draft": os.path.join(TEMPLATES_DIR, ".docx")
+}
+
 TEMPLATE_PATH = r"C:\Users\DELL\Desktop\Kartik\python drafts\LOA_template.docx"
 
 # Function to round off values to the nearest hundred
