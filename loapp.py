@@ -54,7 +54,7 @@ def modify_word_template(client_data, loan_details, client_name):
                 row[1].text = loan["Type of Debt/ Loan"]
                 row[2].text = loan["Loan Account Number"]
 
-                balance_os = float(loan["Balance O/S"])
+                balance_os = int(loan["Balance O/S"])
                 approx_25 = round_off(balance_os * 0.25)
                 approx_30 = round_off(balance_os * 0.30)
 
