@@ -22,7 +22,7 @@ def modify_loa_template(client_data, loan_details, client_name):
             if key in para.text:
                 para.text = para.text.replace(key, str(value))
                 for run in para.runs:
-                    run.font.size = Pt(12)  # Set font size to 12
+                    run.font.size = Pt(12)
 
     # Initialize total calculations
     total_balance_os = 0
@@ -31,19 +31,7 @@ def modify_loa_template(client_data, loan_details, client_name):
 
     # Modify tables
     for table in doc.tables:
-        # First Table (Contains {clientname}, {dateofbirth}, {address})
-        if "{clientname}" in table.rows[0].cells[0].text:
-            for row in table.rows:
-                for cell in row.cells:
-                    for key, value in client_data.items():
-                        if key in cell.text:
-                            cell.text = cell.text.replace(key, str(value))
-                            for para in cell.paragraphs:
-                                for run in para.runs:
-                                    run.font.size = Pt(12)
-
-        # Second Table (Creditor Details)
-        elif "Name of Creditor (App Loan/Bank name)" in table.rows[0].cells[0].text:
+        if "Name of Creditor (App Loan/Bank name)" in table.rows[0].cells[0].text:
             for i, loan in enumerate(loan_details):
                 if i > 0:
                     table.add_row()
@@ -61,34 +49,27 @@ def modify_loa_template(client_data, loan_details, client_name):
                 row[4].text = str(approx_25)  
                 row[5].text = str(approx_30)  
 
-                # Add values to totals
                 total_balance_os += balance_os
                 total_25 += approx_25
                 total_30 += approx_30
 
-                # Set font size for each cell
                 for cell in row:
                     for para in cell.paragraphs:
                         for run in para.runs:
                             run.font.size = Pt(12)
 
-            # Add Total Row
             total_row = table.add_row().cells
-            total_row[0].text = ""
-            total_row[1].text = ""
             total_row[2].text = "Total"
             total_row[3].text = str(total_balance_os)
             total_row[4].text = str(total_25)
             total_row[5].text = str(total_30)
 
-            # Apply font size for total row
             for cell in total_row:
                 for para in cell.paragraphs:
                     for run in para.runs:
                         run.font.size = Pt(12)
-                        run.bold = True  # Make totals bold
+                        run.bold = True
 
-    # Save file as "LOA of {client_name}.docx"
     file_name = f"LOA of {client_name}.docx"
     doc.save(file_name)
     return file_name
@@ -105,7 +86,6 @@ def modify_loe_template(client_data, client_name):
                 for run in para.runs:
                     run.font.size = Pt(12)
 
-    # Save file as "LOE of {client_name}.docx"
     file_name = f"LOE of {client_name}.docx"
     doc.save(file_name)
     return file_name
@@ -113,20 +93,18 @@ def modify_loe_template(client_data, client_name):
 # Streamlit UI
 st.title("Document Generator (LOA & LOE)")
 
-# Select Document Type
 doc_type = st.radio("Select Document Type", ["LOA", "LOE"])
 
-# Client Details Input
 st.subheader("Client Details")
 client_name = st.text_input("Client Name")
-client_city = st.text_input("Client City")
-client_dob = st.date_input("Date of Birth")
 client_address = st.text_area("Address")
 date = st.date_input("Date")
 
 # Loan Details Input (Only if LOA is selected)
 loan_data = None
 if doc_type == "LOA":
+    client_city = st.text_input("Client City")
+    client_dob = st.date_input("Date of Birth")
     st.subheader("Loan Details")
     loan_data = pd.DataFrame(columns=[
         "Name of Creditor (App Loan/Bank name)", 
@@ -136,7 +114,6 @@ if doc_type == "LOA":
     ])
     loan_data = st.data_editor(loan_data, num_rows="dynamic")
 
-# Generate Document Button
 if st.button("Generate Document"):
     if not client_name or not client_address:
         st.error("Please fill in all required fields.")
@@ -145,20 +122,20 @@ if st.button("Generate Document"):
     else:
         client_info = {
             "{clientname}": client_name,
-            "{clientcity}": client_city,
-            "{date}": date.strftime("%d-%m-%Y"),
-            "{dateofbirth}": client_dob.strftime("%d-%m-%Y"),
-            "{address}": client_address
+            "{address}": client_address,
+            "{date}": date.strftime("%d-%m-%Y")
         }
-
+        
         if doc_type == "LOA":
-            # Convert DataFrame to list of dictionaries
+            client_info.update({
+                "{clientcity}": client_city,
+                "{dateofbirth}": client_dob.strftime("%d-%m-%Y")
+            })
             loan_details = loan_data.to_dict(orient="records")
             output_file = modify_loa_template(client_info, loan_details, client_name)
         else:
             output_file = modify_loe_template(client_info, client_name)
 
-        # Display Download Button After Generation
         with open(output_file, "rb") as file:
             st.download_button(
                 label=f"Download {doc_type}",
