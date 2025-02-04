@@ -1,21 +1,20 @@
 import streamlit as st
 import pandas as pd
 from docx import Document
-
+from docx.shared import Pt
 import os
 
-# Define relative path for the Word template
-TEMPLATE_PATH = os.path.join("template", "LOA_template.docx")
+# Define relative paths for Word templates
+LOA_TEMPLATE_PATH = os.path.join("template", "LOA_template.docx")
+LOE_TEMPLATE_PATH = os.path.join("template", "LOE_template.docx")
 
 # Function to round off values to the nearest hundred
 def round_off(value):
     return round(value / 100) * 100
 
-# Function to modify the Word template
-from docx.shared import Pt
-
-def modify_word_template(client_data, loan_details, client_name):
-    doc = Document(TEMPLATE_PATH)
+# Function to modify LOA Word template
+def modify_loa_template(client_data, loan_details, client_name):
+    doc = Document(LOA_TEMPLATE_PATH)
 
     # Replace placeholders outside the table
     for para in doc.paragraphs:
@@ -23,16 +22,15 @@ def modify_word_template(client_data, loan_details, client_name):
             if key in para.text:
                 para.text = para.text.replace(key, str(value))
                 for run in para.runs:
-                    run.font.size = Pt(12)  # Set font size to 12
+                    run.font.size = Pt(12)
 
-    # Initialize total calculations
+    # Initialize totals
     total_balance_os = 0
     total_25 = 0
     total_30 = 0
 
     # Modify tables
     for table in doc.tables:
-        # First Table (Contains {clientname}, {dateofbirth}, {address})
         if "{clientname}" in table.rows[0].cells[0].text:
             for row in table.rows:
                 for cell in row.cells:
@@ -43,7 +41,6 @@ def modify_word_template(client_data, loan_details, client_name):
                                 for run in para.runs:
                                     run.font.size = Pt(12)
 
-        # Second Table (Creditor Details)
         elif "Name of Creditor (App Loan/Bank name)" in table.rows[0].cells[0].text:
             for i, loan in enumerate(loan_details):
                 if i > 0:
@@ -58,16 +55,14 @@ def modify_word_template(client_data, loan_details, client_name):
                 approx_25 = round_off(balance_os * 0.25)
                 approx_30 = round_off(balance_os * 0.30)
 
-                row[3].text = str(balance_os)  
-                row[4].text = str(approx_25)  
-                row[5].text = str(approx_30)  
+                row[3].text = str(balance_os)
+                row[4].text = str(approx_25)
+                row[5].text = str(approx_30)
 
-                # Add values to totals
                 total_balance_os += balance_os
                 total_25 += approx_25
                 total_30 += approx_30
 
-                # Set font size for each cell
                 for cell in row:
                     for para in cell.paragraphs:
                         for run in para.runs:
@@ -75,28 +70,43 @@ def modify_word_template(client_data, loan_details, client_name):
 
             # Add Total Row
             total_row = table.add_row().cells
-            total_row[0].text = ""
-            total_row[1].text = ""
             total_row[2].text = "Total"
             total_row[3].text = str(total_balance_os)
             total_row[4].text = str(total_25)
             total_row[5].text = str(total_30)
 
-            # Apply font size for total row
             for cell in total_row:
                 for para in cell.paragraphs:
                     for run in para.runs:
                         run.font.size = Pt(12)
-                        run.bold = True  # Make totals bold
+                        run.bold = True  
 
-    # Save file as "LOA of {client_name}.docx"
     file_name = f"LOA of {client_name}.docx"
+    doc.save(file_name)
+    return file_name
+
+# Function to modify LOE Word template
+def modify_loe_template(client_data, client_name):
+    doc = Document(LOE_TEMPLATE_PATH)
+
+    # Replace placeholders in the document
+    for para in doc.paragraphs:
+        for key, value in client_data.items():
+            if key in para.text:
+                para.text = para.text.replace(key, str(value))
+                for run in para.runs:
+                    run.font.size = Pt(12)
+
+    file_name = f"LOE of {client_name}.docx"
     doc.save(file_name)
     return file_name
 
 
 # Streamlit UI
-st.title("LOA Generator")
+st.title("LOA & LOE Generator")
+
+# Template Selection
+template_type = st.radio("Select Document Type:", ["LOA", "LOE"])
 
 # Client Details Input
 st.subheader("Client Details")
@@ -106,20 +116,21 @@ client_dob = st.date_input("Date of Birth")
 client_address = st.text_area("Address")
 date = st.date_input("Date")
 
-# Loan Details Input
-st.subheader("Loan Details")
-loan_data = pd.DataFrame(columns=[
-    "Name of Creditor (App Loan/Bank name)", 
-    "Type of Debt/ Loan", 
-    "Loan Account Number", 
-    "Balance O/S"
-])
+# Loan Details Input (Only for LOA)
+loan_details = []
+if template_type == "LOA":
+    st.subheader("Loan Details")
+    loan_data = pd.DataFrame(columns=[
+        "Name of Creditor (App Loan/Bank name)", 
+        "Type of Debt/ Loan", 
+        "Loan Account Number", 
+        "Balance O/S"
+    ])
+    loan_data = st.data_editor(loan_data, num_rows="dynamic")
 
-loan_data = st.data_editor(loan_data, num_rows="dynamic")
-
-# Generate LOA Button
-if st.button("Generate LOA"):
-    if not client_name or loan_data.empty:
+# Generate Document Button
+if st.button(f"Generate {template_type}"):
+    if not client_name:
         st.error("Please fill in all required fields.")
     else:
         client_info = {
@@ -130,16 +141,20 @@ if st.button("Generate LOA"):
             "{address}": client_address
         }
 
-        # Convert DataFrame to list of dictionaries
-        loan_details = loan_data.to_dict(orient="records")
+        # Generate LOA or LOE based on selection
+        if template_type == "LOA":
+            if loan_data.empty:
+                st.error("Please add at least one loan detail.")
+            else:
+                loan_details = loan_data.to_dict(orient="records")
+                output_file = modify_loa_template(client_info, loan_details, client_name)
+        else:
+            output_file = modify_loe_template(client_info, client_name)
 
-        # Modify the Word template
-        output_file = modify_word_template(client_info, loan_details, client_name)
-
-        # Display Download Button After Generation
+        # Display Download Button
         with open(output_file, "rb") as file:
             st.download_button(
-                label="Download LOA",
+                label=f"Download {template_type}",
                 data=file,
                 file_name=output_file,
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
