@@ -16,7 +16,7 @@ def round_off(value):
 def modify_loa_template(client_data, loan_details, client_name):
     doc = Document(LOA_TEMPLATE_PATH)
 
-    # Replace placeholders outside the table
+    # Replace placeholders outside the table (Client details)
     for para in doc.paragraphs:
         for key, value in client_data.items():
             if key in para.text:
@@ -33,15 +33,15 @@ def modify_loa_template(client_data, loan_details, client_name):
     for table in doc.tables:
         if "Name of Creditor (App Loan/Bank name)" in table.rows[0].cells[0].text:
             for i, loan in enumerate(loan_details):
-                if i > 0:
+                if i >= len(table.rows) - 1:  # Ensure enough rows
                     table.add_row()
 
                 row = table.rows[i + 1].cells
-                row[0].text = loan["Name of Creditor (App Loan/Bank name)"]
-                row[1].text = loan["Type of Debt/ Loan"]
-                row[2].text = loan["Loan Account Number"]
+                row[0].text = loan.get("Name of Creditor (App Loan/Bank name)", "")
+                row[1].text = loan.get("Type of Debt/ Loan", "")
+                row[2].text = loan.get("Loan Account Number", "")
 
-                balance_os = int(loan["Balance O/S"])
+                balance_os = int(loan.get("Balance O/S", 0))
                 approx_25 = round_off(balance_os * 0.25)
                 approx_30 = round_off(balance_os * 0.30)
 
@@ -58,6 +58,7 @@ def modify_loa_template(client_data, loan_details, client_name):
                         for run in para.runs:
                             run.font.size = Pt(12)
 
+            # Add total row
             total_row = table.add_row().cells
             total_row[2].text = "Total"
             total_row[3].text = str(total_balance_os)
