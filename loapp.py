@@ -6,7 +6,6 @@ import os
 # Define relative path for the Word template
 TEMPLATE_PATH = os.path.join("template", "LOA_template.docx")
 
-
 # Function to round off values to the nearest hundred
 def round_off(value):
     return round(value / 100) * 100
