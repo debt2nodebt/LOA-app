@@ -100,10 +100,10 @@ st.title("LOA Generator")
 # Client Details Input
 st.subheader("Client Details")
 client_name = st.text_input("Client Name")
-client_city = st.text_input("Client City")
+client_city = st.text_input("Client City / Client State")
 client_dob = st.date_input("Date of Birth")
 client_address = st.text_area("Address")
-date = st.date_input("Date")
+date = st.date_input("Client On-Board Date")
 
 # Loan Details Input
 st.subheader("Loan Details")
