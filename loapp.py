@@ -100,13 +100,13 @@ st.title("LOA Generator")
 # Client Details Input
 st.subheader("Client Details")
 client_name = st.text_input("Client Name")
-client_city = st.text_input("Client City / Client State")
+client_city = st.text_input("Client State / Client City")
 client_dob = st.date_input("Date of Birth")
-client_address = st.text_area("Address")
+client_address = st.text_area("Client Address")
 date = st.date_input("Client On-Board Date")
 
 # Loan Details Input
-st.subheader("Loan Details")
+st.subheader("Loan Creditors Details")
 loan_data = pd.DataFrame(columns=[
     "Name of Creditor (App Loan/Bank name)", 
     "Type of Debt/ Loan", 
