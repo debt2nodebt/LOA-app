@@ -8,7 +8,10 @@ TEMPLATE_PATH = os.path.join("template", "LOA_template.docx")
 
 # Function to round off values to the nearest hundred
 def round_off(value):
-    return round(value / 100) * 100
+    if value % 1000 == 500:
+        return (value // 1000) * 1000
+    else:
+        return round(value / 1000) * 1000
 
 # Function to modify the Word template
 from docx.shared import Pt
